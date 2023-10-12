@@ -4,6 +4,7 @@ namespace Wipedir;
 
 public static class Program
 {
+    
     public static void Main(string[] args) => __MainAsync(args);
     private async static void __MainAsync(string[] args)
     {
@@ -25,22 +26,40 @@ public static class Program
         rootCommand.AddOption(force);
         rootCommand.AddOption(recursive);
 
+        CommandLineArguments Arguments = null;
+
         rootCommand.SetHandler((startDirValue, dirValue, forceValue, recursiveValue) =>
         {
-            __Execute(startDirValue, dirValue, forceValue, recursiveValue);
+            Arguments = new CommandLineArguments()
+            {
+                StartDirectory = startDirValue,
+                DirectoriesToDelete = dirValue,
+                ForceDeletion = forceValue,
+                SearchRecursive = recursiveValue
+            };
         }, startingDirectory, directories, force, recursive);
 
         await rootCommand.InvokeAsync(args);
+
+        if(Arguments == null)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Couldn't parse arguments!");
+            Environment.Exit(1);
+        }
+        __Execute(Arguments);
     }
 
-    private static void __Execute(string startDir, string[] directories, bool force, bool recursive)
+    private static void __Execute(CommandLineArguments arguments)
     {
 #if DEBUG
-        __PrintArgs(startDir, directories, force, recursive);
+        Console.ForegroundColor = ConsoleColor.Gray;
+        Console.WriteLine(arguments);
+        Console.ResetColor();
 #endif
-        __ValidateStartDirectory(startDir);
+        __ValidateStartDirectory(arguments.StartDirectory);
 
-        var FolderPathes = __GetMatchingFolderPathes(startDir, directories, recursive);
+        var FolderPathes = __GetMatchingFolderPathes(arguments);
 
         foreach (var folderPath in FolderPathes)
             Console.WriteLine(folderPath);
@@ -50,7 +69,7 @@ public static class Program
         Console.ResetColor();
         Console.ReadKey();
 
-        __RemoveFolders(FolderPathes, force);
+        __RemoveFolders(FolderPathes, arguments.ForceDeletion);
     }
 
     private static void __RemoveFolders(string[] directories, bool force)
@@ -60,7 +79,9 @@ public static class Program
             try
             {
                 Directory.Delete(dir, true);
-            } catch(Exception ex)
+            }
+            catch (DirectoryNotFoundException) { }
+            catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"Couldn't delete folder '{dir}'. Exception: {ex.ToString()}");
@@ -69,21 +90,13 @@ public static class Program
         }
     }
 
-    private static void __PrintArgs(string startDir, string[] directories, bool force, bool recursive)
-    {
-        Console.WriteLine($"StartDir: {startDir}");
-        Console.WriteLine($"Directory: {string.Join(",", directories)}");
-        Console.WriteLine($"Force: {force}");
-        Console.WriteLine($"Recursive: {recursive}");
-    }
-
-    private static string[]? __GetMatchingFolderPathes(string startDir, string[] directories, bool recursive)
+    private static string[]? __GetMatchingFolderPathes(CommandLineArguments arguments)
     {
         List<string> Result = new List<string>();
         try
         {
-            foreach(var dir in directories)
-                Result.AddRange(Directory.GetDirectories(startDir, dir, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
+            foreach(var dir in arguments.DirectoriesToDelete)
+                Result.AddRange(Directory.GetDirectories(arguments.StartDirectory, dir, arguments.SearchRecursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
         } catch(Exception ex)
         {
             Console.ForegroundColor = ConsoleColor.Red;
