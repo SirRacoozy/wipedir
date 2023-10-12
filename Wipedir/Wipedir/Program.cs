@@ -11,8 +11,8 @@ public static class Program
 
         var startingDirectory = new Option<string>(name: "--start", description: "The starting directory") { IsRequired = true };
         startingDirectory.AddAlias("-s");
-        var directory = new Option<string>(name: "--dirs", description: "Directories to delete") { IsRequired = true };
-        directory.AddAlias("-d");
+        var directories = new Option<string[]>(name: "--dirs", description: "Directories to delete") { IsRequired = true };
+        directories.AddAlias("-d");
         var force = new Option<bool>(name: "--force", description: "Force deletion (currently not implemented", getDefaultValue: () => false);
         force.AddAlias("-f");
         var recursive = new Option<bool>(name: "--recursive", description: "Recursive search", getDefaultValue: () => false);
@@ -33,11 +33,11 @@ public static class Program
         await rootCommand.InvokeAsync(args);
     }
 
-    private static void __Execute(string startDir, string directory, bool force, bool recursive)
+    private static void __Execute(string startDir, string[] directories, bool force, bool recursive)
     {
         __ValidateStartDirectory(startDir);
 
-        var FolderPathes = __GetMatchingFolderPathes(startDir, directory, recursive);
+        var FolderPathes = __GetMatchingFolderPathes(startDir, directories, recursive);
 
         foreach (var folderPath in FolderPathes)
             Console.WriteLine(folderPath);
@@ -74,11 +74,13 @@ public static class Program
         Console.WriteLine($"Recursive: {recursive}");
     }
 
-    private static string[]? __GetMatchingFolderPathes(string startDir, string directory, bool recursive)
+    private static string[]? __GetMatchingFolderPathes(string startDir, string[] directory, bool recursive)
     {
+        List<string> Result = new List<string>();
         try
         {
-            return Directory.GetDirectories(startDir, directory, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+            foreach(var dir in directories)
+                Result.AddRange(Directory.GetDirectories(startDir, dir, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
         } catch(Exception ex)
         {
             Console.ForegroundColor = ConsoleColor.Red;
