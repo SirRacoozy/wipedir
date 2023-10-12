@@ -42,6 +42,11 @@ public static class Program
         foreach (var folderPath in FolderPathes)
             Console.WriteLine(folderPath);
 
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine("Press any key to continue...");
+        Console.ResetColor();
+        Console.ReadKey();
+
         __RemoveFolders(FolderPathes, force);
     }
 
@@ -77,7 +82,7 @@ public static class Program
         } catch(Exception ex)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Couldn't access all folders due to permission issues.");
+            Console.WriteLine($"Couldn't access all folders due to permission issues. {ex.ToString()}");
             Environment.Exit(1);
             return null;
         }
