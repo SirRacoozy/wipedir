@@ -41,11 +41,9 @@ public static class Program
 
         await rootCommand.InvokeAsync(args);
 
-        if(Arguments == null)
+        if (Arguments == null)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Couldn't parse arguments!");
-            Environment.Exit(1);
+            return;
         }
         __Execute(Arguments);
     }
