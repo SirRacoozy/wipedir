@@ -11,9 +11,10 @@ internal class CommandLineArguments
     internal string[] DirectoriesToDelete { get; set; } = Array.Empty<string>();
     internal bool SearchRecursive { get; set; } = false;
     internal bool ForceDeletion { get; set; } = false;
+    internal bool AcknowledgeDeletion { get; set; } = false;
 
     public override string ToString()
     {
-        return $"StartDirectory: {StartDirectory}\nDirectoriesToDelete: {string.Join(",", DirectoriesToDelete)}\nSearchRecursive: {SearchRecursive}\nForceDeletion: {ForceDeletion}";
+        return $"StartDirectory: {StartDirectory}\nDirectoriesToDelete: {string.Join(",", DirectoriesToDelete)}\nSearchRecursive: {SearchRecursive}\nForceDeletion: {ForceDeletion}\nAcknowledgeDeletion: {AcknowledgeDeletion}";
     }
 }

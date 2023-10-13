@@ -10,21 +10,24 @@ public static class Program
     {
         Console.Title = "Wipedir";
 
-        var startingDirectory = new Option<string>(name: "--start", description: "The starting directory") { IsRequired = true };
-        startingDirectory.AddAlias("-s");
-        var directories = new Option<string[]>(name: "--dir", description: "Directory to delete. For multiple directories provide the '-d' argument up to 10 times.") { IsRequired = true, Arity = new ArgumentArity(1, 10) };
-        directories.AddAlias("-d");
-        var force = new Option<bool>(name: "--force", description: "Force deletion (currently not implemented)", getDefaultValue: () => false);
-        force.AddAlias("-f");
-        var recursive = new Option<bool>(name: "--recursive", description: "Recursive search", getDefaultValue: () => false);
-        recursive.AddAlias("-r");
+        var startingDirectoryOption = new Option<string>(name: "--start", description: "The starting directory") { IsRequired = true };
+        startingDirectoryOption.AddAlias("-s");
+        var directoriesOption = new Option<string[]>(name: "--dir", description: "Directory to delete. For multiple directories provide the '-d' argument up to 10 times.") { IsRequired = true, Arity = new ArgumentArity(1, 10) };
+        directoriesOption.AddAlias("-d");
+        var forceOption = new Option<bool>(name: "--force", description: "Force deletion (currently not implemented)", getDefaultValue: () => false);
+        forceOption.AddAlias("-f");
+        var recursiveOption = new Option<bool>(name: "--recursive", description: "Recursive search", getDefaultValue: () => false);
+        recursiveOption.AddAlias("-r");
+        var acknowledgeDeletionOption = new Option<bool>(name: "--yes", description: "Accepting the direct deletion of the found directories without additional button press.", getDefaultValue: () => false);
+        acknowledgeDeletionOption.AddAlias("-y");
 
 
         var rootCommand = new RootCommand("Wipedir");
-        rootCommand.AddOption(startingDirectory);
-        rootCommand.AddOption(directories);
-        rootCommand.AddOption(force);
-        rootCommand.AddOption(recursive);
+        rootCommand.AddOption(startingDirectoryOption);
+        rootCommand.AddOption(directoriesOption);
+        rootCommand.AddOption(forceOption);
+        rootCommand.AddOption(recursiveOption);
+        rootCommand.AddOption(acknowledgeDeletionOption);
 
         CommandLineArguments Arguments = null;
 
@@ -35,9 +38,10 @@ public static class Program
                 StartDirectory = startDirValue,
                 DirectoriesToDelete = dirValue,
                 ForceDeletion = forceValue,
-                SearchRecursive = recursiveValue
+                SearchRecursive = recursiveValue,
+
             };
-        }, startingDirectory, directories, force, recursive);
+        }, startingDirectoryOption, directoriesOption, forceOption, recursiveOption);
 
         await rootCommand.InvokeAsync(args);
 
@@ -64,10 +68,13 @@ public static class Program
         foreach (var folderPath in FolderPathes)
             Console.WriteLine(folderPath);
 
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine("Press any key to continue...");
-        Console.ResetColor();
-        Console.ReadKey();
+        if(!arguments.AcknowledgeDeletion)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Press any key to continue...");
+            Console.ResetColor();
+            Console.ReadKey();
+        }
 
         __RemoveFolders(FolderPathes, arguments.ForceDeletion);
     }
