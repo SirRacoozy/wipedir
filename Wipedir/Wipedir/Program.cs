@@ -1,10 +1,16 @@
-﻿using System.CommandLine;
+﻿using Konsole;
+using System.Collections.Concurrent;
+using System.CommandLine;
 
 namespace Wipedir;
 
 public static class Program
 {
-    
+
+    private static ConcurrentBag<string> _DeleteErrorMessages = new ConcurrentBag<string>();
+    private static long _CurrentFileProgress = 0;
+    private static object _Lock = new object();
+
     public static void Main(string[] args) => __MainAsync(args);
     private async static void __MainAsync(string[] args)
     {
@@ -66,10 +72,12 @@ public static class Program
         foreach (var folderPath in FolderPathes)
             Console.WriteLine(folderPath);
 
-        if(!arguments.AcknowledgeDeletion)
+        Console.WriteLine($"{FolderPathes.Length} folders found.");
+
+        if (!arguments.AcknowledgeDeletion)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Press any key to continue...");
+            Console.Write("Press any key to continue...");
             Console.ResetColor();
             Console.ReadKey();
         }
@@ -79,19 +87,30 @@ public static class Program
 
     private static void __RemoveFolders(string[] directories, bool force)
     {
-        foreach(var dir in directories)
+        Console.Clear();
+        var progressBar = new ProgressBar(PbStyle.DoubleLine, directories.Length);
+        progressBar.Refresh(0);
+        Parallel.ForEach(directories, dir =>
         {
-            try
-            {
-                Directory.Delete(dir, true);
-            }
-            catch (DirectoryNotFoundException) { }
-            catch (Exception ex)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Couldn't delete folder '{dir}'. Exception: {ex.ToString()}");
-                Console.ResetColor();
-            }
+            __RemoveFolder(dir, progressBar);
+        });
+    }
+
+    private static void __RemoveFolder(string directory, ProgressBar progressBar)
+    {
+        try
+        {
+            Directory.Delete(directory, true);
+
+        }
+        catch (Exception ex)
+        {
+            _DeleteErrorMessages.Add(ex.Message);
+        }
+        finally
+        {
+            Interlocked.Increment(ref _CurrentFileProgress);
+            progressBar.Refresh((int)Interlocked.Read(ref _CurrentFileProgress));
         }
     }
 
@@ -100,9 +119,10 @@ public static class Program
         List<string> Result = new List<string>();
         try
         {
-            foreach(var dir in arguments.DirectoriesToDelete)
+            foreach (var dir in arguments.DirectoriesToDelete)
                 Result.AddRange(Directory.GetDirectories(arguments.StartDirectory, dir, arguments.SearchRecursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
-        } catch(Exception ex)
+        }
+        catch (Exception ex)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"Couldn't access all folders due to permission issues. {ex.ToString()}");
@@ -128,4 +148,5 @@ public static class Program
             Environment.Exit(1);
         }
     }
+
 }
