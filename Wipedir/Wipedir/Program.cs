@@ -7,11 +7,18 @@ namespace Wipedir;
 public static class Program
 {
 
+    #region - needs -
+
     private static ConcurrentBag<string> _DeleteErrorMessages = new ConcurrentBag<string>();
     private static long _CurrentFileProgress = 0;
-    private static object _Lock = new object();
+    private static ConcurrentBag<string> _Pathes = new ConcurrentBag<string>();
+    #endregion
 
-    public static void Main(string[] args) => __MainAsync(args);
+    #region [Main]
+    public static void Main(string[] args) => __MainAsync(args); 
+    #endregion
+
+    #region [__MainAsync]
     private async static void __MainAsync(string[] args)
     {
         Console.Title = "Wipedir";
@@ -57,7 +64,28 @@ public static class Program
         }
         __Execute(Arguments);
     }
+    #endregion
 
+    #region [__FindFoldersFromStart]
+    private static void __FindFoldersFromStart(string startDirectory, string[] directoriesToDelete)
+    {
+        try
+        {
+            var directories = Directory.GetDirectories(startDirectory).ToList();
+            var matches = directories.Where(foundDirectory => directoriesToDelete.Any(directoryToDelete => foundDirectory.EndsWith(directoryToDelete))).ToList();
+            matches.ForEach(x => _Pathes.Add(x));
+            directories.RemoveAll(x => matches.Any(y => x.Equals(y)));
+
+            Parallel.ForEach(directories, dir =>
+            {
+                __FindFoldersFromStart(dir, directoriesToDelete);
+            });
+
+        } catch(Exception ex) { }
+    }
+    #endregion
+
+    #region [__Execute]
     private static void __Execute(CommandLineArguments arguments)
     {
 #if DEBUG
@@ -67,12 +95,17 @@ public static class Program
 #endif
         __ValidateStartDirectory(arguments.StartDirectory);
 
-        var FolderPathes = __GetMatchingFolderPathes(arguments);
+        //var FolderPathes = __GetMatchingFolderPathes(arguments);
 
-        foreach (var folderPath in FolderPathes)
-            Console.WriteLine(folderPath);
 
-        Console.WriteLine($"{FolderPathes.Length} folders found.");
+        //foreach (var folderPath in FolderPathes)
+        //    Console.WriteLine(folderPath);
+
+        __FindFoldersFromStart(arguments.StartDirectory, arguments.DirectoriesToDelete);
+
+        Console.WriteLine(string.Join("\n", _Pathes));
+
+        Console.WriteLine($"{_Pathes.Count} folders found.");
 
         if (!arguments.AcknowledgeDeletion)
         {
@@ -82,9 +115,11 @@ public static class Program
             Console.ReadKey();
         }
 
-        __RemoveFolders(FolderPathes, arguments.ForceDeletion);
+        __RemoveFolders(_Pathes.ToArray(), arguments.ForceDeletion);
     }
+    #endregion
 
+    #region [__RemoveFolders]
     private static void __RemoveFolders(string[] directories, bool force)
     {
         Console.Clear();
@@ -95,7 +130,9 @@ public static class Program
             __RemoveFolder(dir, progressBar);
         });
     }
+    #endregion
 
+    #region [__RemoveFolder]
     private static void __RemoveFolder(string directory, ProgressBar progressBar)
     {
         try
@@ -113,7 +150,9 @@ public static class Program
             progressBar.Refresh((int)Interlocked.Read(ref _CurrentFileProgress));
         }
     }
+    #endregion
 
+    #region [__GetMatchingFolderPathes]
     private static string[]? __GetMatchingFolderPathes(CommandLineArguments arguments)
     {
         List<string> Result = new List<string>();
@@ -131,7 +170,9 @@ public static class Program
         }
         return Result.ToArray();
     }
+    #endregion
 
+    #region [__ValidateStartDirectory]
     private static void __ValidateStartDirectory(string value)
     {
         if (string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(value))
@@ -147,6 +188,7 @@ public static class Program
             Console.WriteLine($"The argument -s with the value '{value}' is not a directory.");
             Environment.Exit(1);
         }
-    }
+    } 
+    #endregion
 
 }
