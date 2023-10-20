@@ -8,14 +8,13 @@ public static class Program
 {
 
     #region - needs -
-
     private static ConcurrentBag<string> _DeleteErrorMessages = new ConcurrentBag<string>();
     private static long _CurrentFileProgress = 0;
-    private static ConcurrentBag<string> _Pathes = new ConcurrentBag<string>();
+    private static ConcurrentBag<string> _Paths = new ConcurrentBag<string>();
     #endregion
 
     #region [Main]
-    public static void Main(string[] args) => __MainAsync(args); 
+    public static void Main(string[] args) => __MainAsync(args);
     #endregion
 
     #region [__MainAsync]
@@ -67,21 +66,18 @@ public static class Program
     #endregion
 
     #region [__FindFoldersFromStart]
-    private static void __FindFoldersFromStart(string startDirectory, string[] directoriesToDelete)
+    private static void __FindFoldersFromStart(string startDirectory, string[] directoriesToDelete, ProgressBar progressBar)
     {
         try
         {
             var directories = Directory.GetDirectories(startDirectory).ToList();
             var matches = directories.Where(foundDirectory => directoriesToDelete.Any(directoryToDelete => foundDirectory.EndsWith(directoryToDelete))).ToList();
-            matches.ForEach(x => _Pathes.Add(x));
+            matches.ForEach(x => _Paths.Add(x));
             directories.RemoveAll(x => matches.Any(y => x.Equals(y)));
 
-            Parallel.ForEach(directories, dir =>
-            {
-                __FindFoldersFromStart(dir, directoriesToDelete);
-            });
-
-        } catch(Exception ex) { }
+            Parallel.ForEach(directories, dir => __FindFoldersFromStart(dir, directoriesToDelete, progressBar));
+        }
+        catch (Exception ex) { }
     }
     #endregion
 
@@ -95,17 +91,18 @@ public static class Program
 #endif
         __ValidateStartDirectory(arguments.StartDirectory);
 
-        //var FolderPathes = __GetMatchingFolderPathes(arguments);
+        var progressBar = new ProgressBar(100);
+        progressBar.Refresh(0);
 
+        __FindFoldersFromStart(arguments.StartDirectory, arguments.DirectoriesToDelete, progressBar);
 
-        //foreach (var folderPath in FolderPathes)
-        //    Console.WriteLine(folderPath);
+        progressBar.Refresh(100);
 
-        __FindFoldersFromStart(arguments.StartDirectory, arguments.DirectoriesToDelete);
+        Console.ReadKey();
 
-        Console.WriteLine(string.Join("\n", _Pathes));
+        Console.WriteLine(string.Join("\n", _Paths));
 
-        Console.WriteLine($"{_Pathes.Count} folders found.");
+        Console.WriteLine($"{_Paths.Count} folders found.");
 
         if (!arguments.AcknowledgeDeletion)
         {
@@ -115,7 +112,7 @@ public static class Program
             Console.ReadKey();
         }
 
-        __RemoveFolders(_Pathes.ToArray(), arguments.ForceDeletion);
+        __RemoveFolders(_Paths.ToArray(), arguments.ForceDeletion);
     }
     #endregion
 
@@ -152,26 +149,6 @@ public static class Program
     }
     #endregion
 
-    #region [__GetMatchingFolderPathes]
-    private static string[]? __GetMatchingFolderPathes(CommandLineArguments arguments)
-    {
-        List<string> Result = new List<string>();
-        try
-        {
-            foreach (var dir in arguments.DirectoriesToDelete)
-                Result.AddRange(Directory.GetDirectories(arguments.StartDirectory, dir, arguments.SearchRecursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
-        }
-        catch (Exception ex)
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"Couldn't access all folders due to permission issues. {ex.ToString()}");
-            Environment.Exit(1);
-            return null;
-        }
-        return Result.ToArray();
-    }
-    #endregion
-
     #region [__ValidateStartDirectory]
     private static void __ValidateStartDirectory(string value)
     {
@@ -188,7 +165,7 @@ public static class Program
             Console.WriteLine($"The argument -s with the value '{value}' is not a directory.");
             Environment.Exit(1);
         }
-    } 
+    }
     #endregion
 
 }
