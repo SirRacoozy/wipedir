@@ -28,3 +28,4 @@ Example execution: `.\wipedir.exe -s C:\ -d .vs -d bin -d obj -r`
 
 This software uses the following nuget packages: 
 - [System.CommandLine](https://www.nuget.org/packages/System.CommandLine)
+- [Goblinfactory.Konsole](https://github.com/goblinfactory/konsole/)
