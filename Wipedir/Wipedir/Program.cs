@@ -129,6 +129,7 @@ public static class Program
             Environment.Exit(1);
             return null;
         }
+        Result.RemoveAll(x => !arguments.DirectoriesToDelete.Any(y => (x.Split("\\").LastOrDefault() ?? string.Empty).Equals(y)));
         return Result.ToArray();
     }
 
