@@ -65,8 +65,8 @@ public static class Program
     }
     #endregion
 
-    #region [__FindFoldersFromStart]
-    private static void __FindFoldersFromStart(string startDirectory, string[] directoriesToDelete, ProgressBar progressBar)
+    #region [__FindFolders]
+    private static void __FindFolders(string startDirectory, string[] directoriesToDelete, ProgressBar progressBar)
     {
         try
         {
@@ -75,7 +75,7 @@ public static class Program
             matches.ForEach(x => _Paths.Add(x));
             directories.RemoveAll(x => matches.Any(y => x.Equals(y)));
 
-            Parallel.ForEach(directories, dir => __FindFoldersFromStart(dir, directoriesToDelete, progressBar));
+            Parallel.ForEach(directories, dir => __FindFolders(dir, directoriesToDelete, progressBar));
         }
         catch (Exception ex) { }
     }
@@ -94,7 +94,7 @@ public static class Program
         var progressBar = new ProgressBar(100);
         progressBar.Refresh(0);
 
-        __FindFoldersFromStart(arguments.StartDirectory, arguments.DirectoriesToDelete, progressBar);
+        __FindFolders(arguments.StartDirectory, arguments.DirectoriesToDelete, progressBar);
 
         progressBar.Refresh(100);
 
