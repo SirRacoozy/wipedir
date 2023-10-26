@@ -11,6 +11,10 @@ public class WipedirExecutor
     #endregion
 
     #region - ctor -
+    /// <summary>
+    /// Creates an instance of the WipedirExecutor and instantiates the concurrent bag for the exceptions.
+    /// </summary>
+    /// <param name="args">The command line argument object.</param>
     public WipedirExecutor(CommandLineArguments args)
     {
         _Arguments = args;
@@ -19,6 +23,9 @@ public class WipedirExecutor
     #endregion
 
     #region [Run]
+    /// <summary>
+    /// Runs the procedure to search and delete the folders.
+    /// </summary>
     public void Run()
     {
 #if DEBUG
@@ -45,6 +52,9 @@ public class WipedirExecutor
     #endregion
 
     #region [__PrintArguments]
+    /// <summary>
+    /// Printing the parsed arguments.
+    /// </summary>
     private void __PrintArguments()
     {
         Console.ForegroundColor = ConsoleColor.Gray;
@@ -55,6 +65,12 @@ public class WipedirExecutor
     #endregion
 
     #region [__ValidateStartDirectory]
+    /// <summary>
+    /// Validates the provided starting directory.
+    /// Calls `Environment.Exit(1)` if the provided path is null, empty or only containing whitespaces or the directory
+    /// doesn't exit.
+    /// </summary>
+    /// <param name="path">The path to check if it is a directory.</param>
     private void __ValidateStartDirectory(string path)
     {
         if (string.IsNullOrEmpty(path) || string.IsNullOrWhiteSpace(path))
@@ -73,6 +89,11 @@ public class WipedirExecutor
     }
     #endregion
     #region [__FindAllFoldersToDelete]
+    /// <summary>
+    /// Finding all the folders to search for, optionally doing the search recursively.
+    /// </summary>
+    /// <param name="arguments">The CommandLineArguments object.</param>
+    /// <returns>A list of all the folders found to be deleted.</returns>
     private List<string> __FindAllFoldersToDelete(CommandLineArguments arguments)
     {
         var cancellationToken = new CancellationTokenSource();
@@ -91,6 +112,14 @@ public class WipedirExecutor
     #endregion
 
     #region [__FindFolders]
+    /// <summary>
+    /// The actual implementation of searching the folders. The search for one given search path ends if the path is ended or if on the path there is
+    /// a folder found of the searched folders.
+    /// </summary>
+    /// <param name="startDirectory">The starting directory.</param>
+    /// <param name="directoriesToDelete">A list of directories to search for.</param>
+    /// <param name="searchRecursive">A flag to do the search recursively.</param>
+    /// <returns>A list of found folders.</returns>
     private List<string> __FindFolders(string startDirectory, string[] directoriesToDelete, bool searchRecursive)
     {
         ConcurrentBag<string> paths = new();
@@ -113,6 +142,10 @@ public class WipedirExecutor
     #endregion
 
     #region [__SpinBusyIndicator]
+    /// <summary>
+    /// Spins a busy indicator on to the console.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
     private void __SpinBusyIndicator(CancellationToken cancellationToken)
     {
         var spinSequence = new string[] { "|", "/", "-", "\\" };
@@ -129,6 +162,10 @@ public class WipedirExecutor
     #endregion
 
     #region [__PrintFoundFolders]
+    /// <summary>
+    /// Printing the found folders and prompt the user for a random key before deletion if the AcknowledgeDeletion argument is not provided.
+    /// </summary>
+    /// <param name="folders">The list of found folders.</param>
     private void __PrintFoundFolders(IEnumerable<string> folders)
     {
         Console.WriteLine(string.Join(Environment.NewLine, folders));
@@ -145,11 +182,18 @@ public class WipedirExecutor
     #endregion
 
     #region [__RemoveFolders]
+    /// <summary>
+    /// Removes the found folders in parallel and printing a progress bar.
+    /// </summary>
+    /// <param name="directories">A list of all the directories to delete.</param>
+    /// <param name="force">A flag to force the deletion of a folder. !!! NOT YET IMPLEMENTED !!!</param>
+    /// <returns>The number of folders that got deleted.</returns>
     private long __RemoveFolders(List<string> directories, bool force)
     {
         Console.Clear();
 
         long currentFileProgress = 0;
+        long filesDeleted = 0;
 
         var progressBar = new ProgressBar(PbStyle.DoubleLine, directories.Count);
         progressBar.Refresh(0);
@@ -159,6 +203,7 @@ public class WipedirExecutor
             try
             {
                 Directory.Delete(dir, true);
+                Interlocked.Increment(ref filesDeleted);
             }
             catch (Exception ex)
             {
@@ -170,11 +215,14 @@ public class WipedirExecutor
                 progressBar.Refresh((int)Interlocked.Read(ref currentFileProgress));
             }
         });
-        return currentFileProgress;
+        return filesDeleted;
     }
     #endregion
 
     #region [__PressKeyToContinue]
+    /// <summary>
+    /// Prompts the user to press a key.
+    /// </summary>
     private void __PressKeyToContinue()
     {
         Console.Write("Press any key to continue...");
@@ -183,6 +231,10 @@ public class WipedirExecutor
     #endregion
 
     #region [__WriteErrorsIntoFile]
+    /// <summary>
+    /// Writing the errors into a file.
+    /// </summary>
+    /// <param name="filePath">The file path.</param>
     private void __WriteErrorsIntoFile(string filePath)
     {
         File.WriteAllText(filePath, string.Join("\n", _Exceptions.Select(e => e.ToString())));
@@ -192,6 +244,10 @@ public class WipedirExecutor
     #endregion
 
     #region [__ValidateErrorOutputFile]
+    /// <summary>
+    /// Validates the path of the error output file.
+    /// </summary>
+    /// <param name="filePath">The file path.</param>
     private void __ValidateErrorOutputFile(string filePath)
     {
         try
