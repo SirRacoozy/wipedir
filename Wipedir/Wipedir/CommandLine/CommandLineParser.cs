@@ -15,6 +15,12 @@ public class CommandLineParser
 	#endregion
 
 	#region - ctor -
+    /// <summary>
+    /// Creates an instance of the CommandLineParser.
+    /// While instantiation the root command wipedir is created and assigned all the options.
+    /// Also the handler to map the settings is assigned.
+    /// </summary>
+    /// <param name="arguments">The command line arguments.</param>
 	public CommandLineParser(string[] arguments) 
 	{
 		_Arguments = arguments;
@@ -34,7 +40,6 @@ public class CommandLineParser
         skipFoundFolderPrintingOption.AddAlias("-sp");
         var errorOutputOption = new Option<string>(name: "--error", description: "Enables the error output into a provided file.", getDefaultValue: () => string.Empty);
         errorOutputOption.AddAlias("-e");
-
 
         _RootCommand = new RootCommand("Wipedir");
         _RootCommand.AddOption(startingDirectoryOption);
@@ -61,6 +66,9 @@ public class CommandLineParser
     #region - properties -
 
     #region [Arguments]
+    /// <summary>
+    /// Getting the CommandLineArguments object.
+    /// </summary>
     public CommandLineArguments Arguments => _ParsedArguments!;
     #endregion
 
@@ -69,6 +77,9 @@ public class CommandLineParser
     #region - methods -
 
     #region [Parse]
+    /// <summary>
+    /// Parsing the command line arguments.
+    /// </summary>
     public async Task Parse()
     {
         await _RootCommand!.InvokeAsync(_Arguments).ConfigureAwait(true);
