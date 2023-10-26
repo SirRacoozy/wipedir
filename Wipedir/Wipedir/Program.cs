@@ -7,11 +7,17 @@ namespace Wipedir;
 public static class Program
 {
 
+    #region - needs -
     private static ConcurrentBag<string> _DeleteErrorMessages = new ConcurrentBag<string>();
     private static long _CurrentFileProgress = 0;
-    private static object _Lock = new object();
+    private static ConcurrentBag<string> _Paths = new ConcurrentBag<string>();
+    #endregion
 
+    #region [Main]
     public static void Main(string[] args) => __MainAsync(args);
+    #endregion
+
+    #region [__MainAsync]
     private async static void __MainAsync(string[] args)
     {
         Console.Title = "Wipedir";
@@ -35,7 +41,7 @@ public static class Program
         rootCommand.AddOption(recursiveOption);
         rootCommand.AddOption(acknowledgeDeletionOption);
 
-        CommandLineArguments Arguments = null;
+        CommandLineArguments? Arguments = null;
 
         rootCommand.SetHandler((startDirValue, dirValue, forceValue, recursiveValue) =>
         {
@@ -57,7 +63,10 @@ public static class Program
         }
         __Execute(Arguments);
     }
+    #endregion
 
+
+    #region [__Execute]
     private static void __Execute(CommandLineArguments arguments)
     {
 #if DEBUG
@@ -67,12 +76,17 @@ public static class Program
 #endif
         __ValidateStartDirectory(arguments.StartDirectory);
 
-        var FolderPathes = __GetMatchingFolderPathes(arguments);
+        var cancellationToken = new CancellationTokenSource();
 
-        foreach (var folderPath in FolderPathes)
-            Console.WriteLine(folderPath);
+        Parallel.Invoke(() => __SpinBusyIndicator(cancellationToken.Token), () =>
+        {
+            __FindFolders(arguments.StartDirectory, arguments.DirectoriesToDelete);
+            cancellationToken.Cancel();
+        });
 
-        Console.WriteLine($"{FolderPathes.Length} folders found.");
+        Console.WriteLine(string.Join("\n", _Paths));
+
+        Console.WriteLine($"{_Paths.Count} folders found.");
 
         if (!arguments.AcknowledgeDeletion)
         {
@@ -82,9 +96,43 @@ public static class Program
             Console.ReadKey();
         }
 
-        __RemoveFolders(FolderPathes, arguments.ForceDeletion);
+        __RemoveFolders(_Paths.ToArray(), arguments.ForceDeletion);
     }
+    #endregion
 
+    #region [__FindFolders]
+    private static void __FindFolders(string startDirectory, string[] directoriesToDelete)
+    {
+        try
+        {
+            var directories = Directory.GetDirectories(startDirectory).ToList();
+            var matches = directories.Where(foundDirectory => directoriesToDelete.Any(directoryToDelete => foundDirectory.EndsWith(directoryToDelete))).ToList();
+            matches.ForEach(x => _Paths.Add(x));
+            directories.RemoveAll(x => matches.Any(y => x.Equals(y)));
+
+            Parallel.ForEach(directories, dir => __FindFolders(dir, directoriesToDelete));
+        }
+        catch { }
+    }
+    #endregion
+
+    #region [__SpinBusyIndicator]
+    private static void __SpinBusyIndicator(CancellationToken cancellationToken)
+    {
+        var spinSequence = new string[] { "|", "/", "-", "\\" };
+        
+        for(int i = 0; !cancellationToken.IsCancellationRequested; i++)
+        {
+            Console.Clear();
+            Console.Write($"Searching: \t{spinSequence[i]}");
+            if (i == spinSequence.Length - 1)
+                i = 0;
+            Thread.Sleep(100);
+        }
+    }
+    #endregion
+
+    #region [__RemoveFolders]
     private static void __RemoveFolders(string[] directories, bool force)
     {
         Console.Clear();
@@ -95,7 +143,9 @@ public static class Program
             __RemoveFolder(dir, progressBar);
         });
     }
+    #endregion
 
+    #region [__RemoveFolder]
     private static void __RemoveFolder(string directory, ProgressBar progressBar)
     {
         try
@@ -113,6 +163,7 @@ public static class Program
             progressBar.Refresh((int)Interlocked.Read(ref _CurrentFileProgress));
         }
     }
+    #endregion
 
     private static string[]? __GetMatchingFolderPathes(CommandLineArguments arguments)
     {
@@ -149,5 +200,6 @@ public static class Program
             Environment.Exit(1);
         }
     }
+    #endregion
 
 }
