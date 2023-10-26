@@ -41,7 +41,7 @@ public static class Program
         rootCommand.AddOption(recursiveOption);
         rootCommand.AddOption(acknowledgeDeletionOption);
 
-        CommandLineArguments Arguments = null;
+        CommandLineArguments? Arguments = null;
 
         rootCommand.SetHandler((startDirValue, dirValue, forceValue, recursiveValue) =>
         {
@@ -65,21 +65,6 @@ public static class Program
     }
     #endregion
 
-    #region [__FindFolders]
-    private static void __FindFolders(string startDirectory, string[] directoriesToDelete, ProgressBar progressBar)
-    {
-        try
-        {
-            var directories = Directory.GetDirectories(startDirectory).ToList();
-            var matches = directories.Where(foundDirectory => directoriesToDelete.Any(directoryToDelete => foundDirectory.EndsWith(directoryToDelete))).ToList();
-            matches.ForEach(x => _Paths.Add(x));
-            directories.RemoveAll(x => matches.Any(y => x.Equals(y)));
-
-            Parallel.ForEach(directories, dir => __FindFolders(dir, directoriesToDelete, progressBar));
-        }
-        catch (Exception ex) { }
-    }
-    #endregion
 
     #region [__Execute]
     private static void __Execute(CommandLineArguments arguments)
@@ -91,14 +76,13 @@ public static class Program
 #endif
         __ValidateStartDirectory(arguments.StartDirectory);
 
-        var progressBar = new ProgressBar(100);
-        progressBar.Refresh(0);
+        var cancellationToken = new CancellationTokenSource();
 
-        __FindFolders(arguments.StartDirectory, arguments.DirectoriesToDelete, progressBar);
-
-        progressBar.Refresh(100);
-
-        Console.ReadKey();
+        Parallel.Invoke(() => __SpinBusyIndicator(cancellationToken.Token), () =>
+        {
+            __FindFolders(arguments.StartDirectory, arguments.DirectoriesToDelete);
+            cancellationToken.Cancel();
+        });
 
         Console.WriteLine(string.Join("\n", _Paths));
 
@@ -113,6 +97,38 @@ public static class Program
         }
 
         __RemoveFolders(_Paths.ToArray(), arguments.ForceDeletion);
+    }
+    #endregion
+
+    #region [__FindFolders]
+    private static void __FindFolders(string startDirectory, string[] directoriesToDelete)
+    {
+        try
+        {
+            var directories = Directory.GetDirectories(startDirectory).ToList();
+            var matches = directories.Where(foundDirectory => directoriesToDelete.Any(directoryToDelete => foundDirectory.EndsWith(directoryToDelete))).ToList();
+            matches.ForEach(x => _Paths.Add(x));
+            directories.RemoveAll(x => matches.Any(y => x.Equals(y)));
+
+            Parallel.ForEach(directories, dir => __FindFolders(dir, directoriesToDelete));
+        }
+        catch { }
+    }
+    #endregion
+
+    #region [__SpinBusyIndicator]
+    private static void __SpinBusyIndicator(CancellationToken cancellationToken)
+    {
+        var spinSequence = new string[] { "|", "/", "-", "\\" };
+        
+        for(int i = 0; !cancellationToken.IsCancellationRequested; i++)
+        {
+            Console.Clear();
+            Console.Write($"Searching: \t{spinSequence[i]}");
+            if (i == spinSequence.Length - 1)
+                i = 0;
+            Thread.Sleep(100);
+        }
     }
     #endregion
 
