@@ -12,6 +12,8 @@ Example execution: `.\wipedir.exe -s C:\ -d .vs -d bin -d obj -r`
 |`--dir`|`-d`|Directory to delete. For multiple directories provide the `-d` argument up to 10 times.|
 |`--recursive`|`-r`|Recursive search.|
 |`--yes`|`-y`|Accepting the direct deletion of the found directories without additional button press.|
+|`--skipFolderPrint`|`-sp`|Skips the printing of the found folders before deletion.|
+|`--error`|`-e`|Enables the error output into a provided file.|
 
 ## How to build from source
 
