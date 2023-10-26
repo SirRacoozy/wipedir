@@ -2,7 +2,7 @@
   "profiles": {
     "Wipedir": {
       "commandName": "Project",
-      "commandLineArgs": "-s D:\\Test -d .vs -d .ls -r -f"
+      "commandLineArgs": "-s D:\\Test -d .vs -d .ls -r -f -sp"
     }
   }
 }
