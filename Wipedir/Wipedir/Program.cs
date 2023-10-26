@@ -106,7 +106,7 @@ public static class Program
         try
         {
             var directories = Directory.GetDirectories(startDirectory).ToList();
-            var matches = directories.Where(foundDirectory => directoriesToDelete.Any(directoryToDelete => foundDirectory.EndsWith(directoryToDelete))).ToList();
+            var matches = directories.Where(foundDirectory => directoriesToDelete.Any(directoryToDelete => foundDirectory.Split("\\").LastOrDefault().Equals(directoryToDelete))).ToList();
             matches.ForEach(x => _Paths.Add(x));
             directories.RemoveAll(x => matches.Any(y => x.Equals(y)));
 
@@ -165,25 +165,7 @@ public static class Program
     }
     #endregion
 
-    private static string[]? __GetMatchingFolderPathes(CommandLineArguments arguments)
-    {
-        List<string> Result = new List<string>();
-        try
-        {
-            foreach (var dir in arguments.DirectoriesToDelete)
-                Result.AddRange(Directory.GetDirectories(arguments.StartDirectory, dir, arguments.SearchRecursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
-        }
-        catch (Exception ex)
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"Couldn't access all folders due to permission issues. {ex.ToString()}");
-            Environment.Exit(1);
-            return null;
-        }
-        Result.RemoveAll(x => !arguments.DirectoriesToDelete.Any(y => (x.Split("\\").LastOrDefault() ?? string.Empty).Equals(y)));
-        return Result.ToArray();
-    }
-
+    #region [__ValidateStartDirectory]
     private static void __ValidateStartDirectory(string value)
     {
         if (string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(value))
