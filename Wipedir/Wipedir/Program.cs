@@ -106,7 +106,7 @@ public static class Program
         try
         {
             var directories = Directory.GetDirectories(startDirectory).ToList();
-            var matches = directories.Where(foundDirectory => directoriesToDelete.Any(directoryToDelete => foundDirectory.EndsWith(directoryToDelete))).ToList();
+            var matches = directories.Where(foundDirectory => directoriesToDelete.Any(directoryToDelete => foundDirectory.Split("\\").LastOrDefault().Equals(directoryToDelete))).ToList();
             matches.ForEach(x => _Paths.Add(x));
             directories.RemoveAll(x => matches.Any(y => x.Equals(y)));
 
