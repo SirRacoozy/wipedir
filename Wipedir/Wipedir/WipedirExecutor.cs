@@ -34,7 +34,7 @@ public class WipedirExecutor
 
         __ValidateStartDirectory(_Arguments.StartDirectory);
 
-        if(string.IsNullOrEmpty(_Arguments.ErrorOutputFile))
+        if(!string.IsNullOrEmpty(_Arguments.ErrorOutputFile))
             __ValidateErrorOutputFile(_Arguments.ErrorOutputFile);
 
         var folders = __FindAllFoldersToDelete(_Arguments);
