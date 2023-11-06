@@ -55,7 +55,14 @@ public class CommandLineArguments
     /// <summary>
     /// Skips the printing of the found folders.
     /// </summary>
-    public bool SkipFoundFolderPrinting { get; set; } = false; 
+    public bool SkipFoundFolderPrinting { get; set; } = false;
+    #endregion
+
+    #region [SkipVersionCheck]
+    /// <summary>
+    /// Skips the version check.
+    /// </summary>
+    public bool SkipVersionCheck { get; set; } = false;
     #endregion
 
     #endregion
@@ -71,7 +78,8 @@ public class CommandLineArguments
             $"ForceDeletion: {ForceDeletion}\n" +
             $"AcknowledgeDeletion: {AcknowledgeDeletion}\n" +
             $"SkipFoundFolderPrinting: {SkipFoundFolderPrinting}\n" +
-            $"ErrorOutputDirectory: {ErrorOutputFile}";
+            $"ErrorOutputDirectory: {ErrorOutputFile}\n" +
+            $"SkipVersionCheck: {SkipVersionCheck}";
     }
     #endregion 
 
