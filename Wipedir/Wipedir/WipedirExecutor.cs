@@ -1,5 +1,7 @@
 ﻿using Konsole;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Wipedir.CommandLine;
 
 namespace Wipedir;
@@ -42,9 +44,10 @@ public class WipedirExecutor
             __PrintFoundFolders(folders);
         var removedFilesCount = __RemoveFolders(folders, _Arguments.ForceDeletion);
         Console.WriteLine($"Deleted {removedFilesCount} files.");
-        if(!string.IsNullOrEmpty(_Arguments.ErrorOutputFile) && _Exceptions.Count > 0)
+        if(_Exceptions.Count > 0)
             __WriteErrorsIntoFile(_Arguments.ErrorOutputFile);
-        __PressKeyToContinue();
+        else
+            __PressKeyToContinue();
     }
 
     
@@ -239,7 +242,48 @@ public class WipedirExecutor
     {
         File.WriteAllText(filePath, string.Join("\n", _Exceptions.Select(e => e.ToString())));
         Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine($"{_Exceptions.Count} exceptions occurred. Exceptions where written to '{_Arguments.ErrorOutputFile}'!");
+        if(_Exceptions.Any())
+        {
+            Console.WriteLine($"{_Exceptions.Count} exceptions occurred. Exceptions where written to '{_Arguments.ErrorOutputFile}'!");
+            Console.Write("Press 'O' to open the log file or any other key to continue...");
+
+            var Key = Console.ReadKey();
+            if(Key.Key == ConsoleKey.O)
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    __OpenFileInDefaultEditorOnWindows(filePath);
+                else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    __OpenFileInDefaultEditorOnLinux(filePath);
+                else if(RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    __OpenFileInDefaultEditorOnMacOS(filePath);
+            }
+        }
+    }
+    #endregion
+
+
+    #region [__OpenFileInDefaultEditorOnWindows]
+    private void __OpenFileInDefaultEditorOnWindows(string filePath)
+    {
+        Process.Start(new ProcessStartInfo() { FileName = filePath, UseShellExecute = true });
+    }
+    #endregion
+
+    #region [__OpenFileInDefaultEditorOnMacOS]
+    private void __OpenFileInDefaultEditorOnMacOS(string filePath)
+    {
+        Process.Start("open", filePath);
+    }
+    #endregion
+
+    #region [__OpenFileInDefaultEditorOnLinux]
+    private void __OpenFileInDefaultEditorOnLinux(string filePath)
+    {
+        Process.Start(new ProcessStartInfo()
+        {
+            FileName = "xdg-open",
+            Arguments = filePath
+        });
     }
     #endregion
 
@@ -252,11 +296,15 @@ public class WipedirExecutor
     {
         try
         {
+            var splitted = filePath.Split("\\");
+            
+            Directory.CreateDirectory(Path.Combine(splitted.Take(splitted.Length - 1).ToArray()));
             File.Create(filePath).Dispose();
         } catch(Exception _)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(_.ToString());
+            Console.ResetColor();
             Environment.Exit(1);
         }
     }
