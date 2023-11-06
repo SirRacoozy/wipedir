@@ -38,7 +38,7 @@ public class CommandLineParser
         acknowledgeDeletionOption.AddAlias("-y");
         var skipFoundFolderPrintingOption = new Option<bool>(name: "--skipFolderPrint", description: "Skips the printing of the found folders before deletion.");
         skipFoundFolderPrintingOption.AddAlias("-sp");
-        var errorOutputOption = new Option<string>(name: "--error", description: "Enables the error output into a provided file.", getDefaultValue: () => string.Empty);
+        var errorOutputOption = new Option<string>(name: "--error", description: "Enables the error output into a provided file.", getDefaultValue: () => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "wipedir", $"{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}-error.txt"));
         errorOutputOption.AddAlias("-e");
 
         _RootCommand = new RootCommand("Wipedir");
