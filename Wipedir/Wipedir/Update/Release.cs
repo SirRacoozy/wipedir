@@ -17,6 +17,9 @@ internal class Release
     [DataMember]
     public string name { get; set; }
 
+    [DataMember]
+    public bool prerelease { get; set; }
+
     public Version Version
     {
         get

@@ -1,6 +1,4 @@
-﻿using System.Net;
-using System.Reflection;
-using System.Runtime.Serialization;
+﻿using System.Reflection;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using Wipedir.CommandLine;
@@ -18,7 +16,7 @@ public static class Program
 
         CommandLineParser parser = new(args);
         await parser.Parse();
-        if(!parser.Arguments.SkipVersionCheck)
+        if (!parser.Arguments.SkipVersionCheck)
             __CheckForUpdate();
 
         WipedirExecutor executor = new(parser.Arguments);
@@ -43,30 +41,35 @@ public static class Program
 
                 bool updateAvailable = false;
 
+                if (releases == null || currentVersion == null)
+                    return;
+
+                releases = releases.Where(r => !r.prerelease).ToList();
+
                 if (releases.Any(r => r.Version.Major > currentVersion.Major))
                     updateAvailable = true;
                 else
                 {
-                    var releasesOnSameMajor = releases.Where(r => r.Version.Major == currentVersion.Major).ToList();
-                    if (!releasesOnSameMajor.Any())
+                    releases = releases.Where(r => r.Version.Major == currentVersion.Major).ToList();
+                    if (!releases.Any())
                         return;
-                    var greatestMinorVersion = releasesOnSameMajor.Max(r => r.Version.Minor);
+                    var greatestMinorVersion = releases.Max(r => r.Version.Minor);
                     if (greatestMinorVersion > currentVersion.Minor)
                         updateAvailable = true;
                     else
                     {
-                        var releasesOnSameMinor = releases.Where(r => r.Version.Minor == currentVersion.Minor).ToList();
-                        if (!releasesOnSameMinor.Any())
+                        releases = releases.Where(r => r.Version.Minor == currentVersion.Minor).ToList();
+                        if (!releases.Any())
                             return;
-                        var greatestBuildVersion = releasesOnSameMinor.Max(r => r.Version.Build);
+                        var greatestBuildVersion = releases.Max(r => r.Version.Build);
                         if (greatestBuildVersion > currentVersion.Build)
                             updateAvailable = true;
                         else
                         {
-                            var releasesOnSameBuild = releases.Where(r => r.Version.Build == currentVersion.Build).ToList();
-                            if (!releasesOnSameBuild.Any())
+                            releases = releases.Where(r => r.Version.Build == currentVersion.Build).ToList();
+                            if (!releases.Any())
                                 return;
-                            var greatestMinorRevisionVersion = releasesOnSameBuild.Max(r => r.Version.MinorRevision);
+                            var greatestMinorRevisionVersion = releases.Max(r => r.Version.MinorRevision);
                             if (greatestMinorRevisionVersion > currentVersion.MinorRevision)
                                 updateAvailable = true;
                         }
@@ -74,20 +77,27 @@ public static class Program
                 }
                 if (updateAvailable)
                 {
+                    var greatestVersion = releases
+                        .OrderByDescending(r => r.Version.Major)
+                        .ThenByDescending(r => r.Version.Minor)
+                        .ThenByDescending(r => r.Version.Build)
+                        .ThenByDescending(r => r.Version.MinorRevision)
+                        .FirstOrDefault()?.Version;
                     Console.Title = "wipedir - Update available";
                     Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("A new update is available. Visit https://github.com/repos/Secodity/wipedir/releases to download the new version.\n" +
+                    Console.WriteLine($"A new update is available. Version {greatestVersion}\n" +
+                        "Visit https://github.com/repos/Secodity/wipedir/releases to download the new version.\n" +
                         "Press any key to continue...");
                     Console.ReadKey();
                     Console.ResetColor();
 
-                    
+
                 }
             }
         }
     }
 
-    
+
 
 
 }
