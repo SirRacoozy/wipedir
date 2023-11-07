@@ -4,14 +4,17 @@ using System.CommandLine;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Wipedir.Executor;
+using Wipedir.Update;
 
 namespace Wipedir.CommandLine;
-public class CommandLineParser
+internal class CommandLineParser
 {
 	#region  - needs -
 	private readonly string[] _Arguments;
 	private static CommandLineArguments? _ParsedArguments;
     private readonly RootCommand? _RootCommand;
+    private readonly GitReleaseManager _GitReleaseManager;
 	#endregion
 
 	#region - ctor -
@@ -21,11 +24,32 @@ public class CommandLineParser
     /// Also the handler to map the settings is assigned.
     /// </summary>
     /// <param name="arguments">The command line arguments.</param>
-	public CommandLineParser(string[] arguments) 
+	internal CommandLineParser(string[] arguments, GitReleaseManager manager) 
 	{
 		_Arguments = arguments;
 		_ParsedArguments = new();
+        _RootCommand = __SetupRootCommand();
+        _RootCommand.AddCommand(__SetupInstallCommand());
+        _GitReleaseManager = manager;
+    }
+    #endregion
 
+    #region - properties -
+
+    #region [Arguments]
+    /// <summary>
+    /// Getting the CommandLineArguments object.
+    /// </summary>
+    public CommandLineArguments Arguments => _ParsedArguments!;
+    #endregion
+
+    #endregion
+
+    #region - methods -
+
+    #region [__SetupRootCommand]
+    private RootCommand __SetupRootCommand()
+    {
         var startingDirectoryOption = new Option<string>(name: "--start", description: "The starting directory") { IsRequired = true };
         startingDirectoryOption.AddAlias("-s");
         var directoriesOption = new Option<string[]>(name: "--dir", description: "Directory to delete. For multiple directories provide the '-d' argument up to 10 times.") { IsRequired = true, Arity = new ArgumentArity(1, 10) };
@@ -43,17 +67,17 @@ public class CommandLineParser
         var skipVersionCheckOption = new Option<bool>(name: "--skipVersionCheck", description: "Skips the version check at the beginning.", getDefaultValue: () => false);
         skipVersionCheckOption.AddAlias("-sv");
 
-        _RootCommand = new RootCommand("Wipedir");
-        _RootCommand.AddOption(startingDirectoryOption);
-        _RootCommand.AddOption(directoriesOption);
-        _RootCommand.AddOption(forceOption);
-        _RootCommand.AddOption(recursiveOption);
-        _RootCommand.AddOption(acknowledgeDeletionOption);
-        _RootCommand.AddOption(skipFoundFolderPrintingOption);
-        _RootCommand.AddOption(errorOutputOption);
-        _RootCommand.AddOption(skipVersionCheckOption);
+        var rootCommand = new RootCommand("Wipedir");
+        rootCommand.AddOption(startingDirectoryOption);
+        rootCommand.AddOption(directoriesOption);
+        rootCommand.AddOption(forceOption);
+        rootCommand.AddOption(recursiveOption);
+        rootCommand.AddOption(acknowledgeDeletionOption);
+        rootCommand.AddOption(skipFoundFolderPrintingOption);
+        rootCommand.AddOption(errorOutputOption);
+        rootCommand.AddOption(skipVersionCheckOption);
 
-        _RootCommand.SetHandler((startDir, dirs, force, recursive, acknowledge, skipFoundFolderPrinting, errorOutput, skipVersionCheck) =>
+        rootCommand.SetHandler((startDir, dirs, force, recursive, acknowledge, skipFoundFolderPrinting, errorOutput, skipVersionCheck) =>
         {
             _ParsedArguments.StartDirectory = startDir;
             _ParsedArguments.DirectoriesToDelete = dirs;
@@ -64,21 +88,31 @@ public class CommandLineParser
             _ParsedArguments.ErrorOutputFile = errorOutput;
             _ParsedArguments.SkipVersionCheck = skipVersionCheck;
         }, startingDirectoryOption, directoriesOption, forceOption, recursiveOption, acknowledgeDeletionOption, skipFoundFolderPrintingOption, errorOutputOption, skipVersionCheckOption);
+
+        return rootCommand;
     }
     #endregion
 
-    #region - properties -
+    #region [__SetupInstallCommand]
+    private Command __SetupInstallCommand()
+    {
+        var command = new Command("install", "Installs the wipedir as a system wide command.");
+        var installDirOption = new Option<string>(name: "--dir", description: "The installation directory." , getDefaultValue: () => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "wipedir"));
+        installDirOption.AddAlias("-d");
+        var downloadNewestOption = new Option<bool>(name: "--download", description: "Downloads the newest version from GitHub.", getDefaultValue: () => false);
+        downloadNewestOption.AddAlias("-dl");
 
-    #region [Arguments]
-    /// <summary>
-    /// Getting the CommandLineArguments object.
-    /// </summary>
-    public CommandLineArguments Arguments => _ParsedArguments!;
+        command.AddOption(installDirOption);
+        command.AddOption(downloadNewestOption);
+
+        command.SetHandler((installDir, downloadNewest) =>
+        {
+            WipedirInstallationExecutor.Install(installDir, downloadNewest, _GitReleaseManager);
+        }, installDirOption, downloadNewestOption);
+
+        return command;
+    }
     #endregion
-
-    #endregion
-
-    #region - methods -
 
     #region [Parse]
     /// <summary>
