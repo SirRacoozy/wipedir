@@ -40,6 +40,8 @@ public class CommandLineParser
         skipFoundFolderPrintingOption.AddAlias("-sp");
         var errorOutputOption = new Option<string>(name: "--error", description: "Enables the error output into a provided file.", getDefaultValue: () => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "wipedir", $"{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}-error.txt"));
         errorOutputOption.AddAlias("-e");
+        var skipVersionCheckOption = new Option<bool>(name: "--skipVersionCheck", description: "Skips the version check at the beginning.", getDefaultValue: () => false);
+        skipVersionCheckOption.AddAlias("-sv");
 
         _RootCommand = new RootCommand("Wipedir");
         _RootCommand.AddOption(startingDirectoryOption);
@@ -49,8 +51,9 @@ public class CommandLineParser
         _RootCommand.AddOption(acknowledgeDeletionOption);
         _RootCommand.AddOption(skipFoundFolderPrintingOption);
         _RootCommand.AddOption(errorOutputOption);
+        _RootCommand.AddOption(skipVersionCheckOption);
 
-        _RootCommand.SetHandler((startDir, dirs, force, recursive, acknowledge, skipFoundFolderPrinting, errorOutput) =>
+        _RootCommand.SetHandler((startDir, dirs, force, recursive, acknowledge, skipFoundFolderPrinting, errorOutput, skipVersionCheck) =>
         {
             _ParsedArguments.StartDirectory = startDir;
             _ParsedArguments.DirectoriesToDelete = dirs;
@@ -59,7 +62,8 @@ public class CommandLineParser
             _ParsedArguments.AcknowledgeDeletion = acknowledge;
             _ParsedArguments.SkipFoundFolderPrinting = skipFoundFolderPrinting;
             _ParsedArguments.ErrorOutputFile = errorOutput;
-        }, startingDirectoryOption, directoriesOption, forceOption, recursiveOption, acknowledgeDeletionOption, skipFoundFolderPrintingOption, errorOutputOption);
+            _ParsedArguments.SkipVersionCheck = skipVersionCheck;
+        }, startingDirectoryOption, directoriesOption, forceOption, recursiveOption, acknowledgeDeletionOption, skipFoundFolderPrintingOption, errorOutputOption, skipVersionCheckOption);
     }
     #endregion
 
