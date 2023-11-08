@@ -9,10 +9,11 @@ namespace Wipedir.Update;
 internal class GitReleaseManager
 {
     #region - ctor -
-    public GitReleaseManager(string Uri)
+    public GitReleaseManager(Version currentVersion, string Uri)
     {
         RepoUri = new(Uri);
         __GetReleases();
+        NewestVersion = CheckForAvailableUpdate(currentVersion, false).NewestVersion;
     }
     #endregion
 

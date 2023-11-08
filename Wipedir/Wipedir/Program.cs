@@ -2,6 +2,7 @@
 using System.Runtime.Serialization.Json;
 using System.Text;
 using Wipedir.CommandLine;
+using Wipedir.Executor;
 using Wipedir.Update;
 
 namespace Wipedir;
@@ -12,17 +13,15 @@ public static class Program
     public static void Main(string[] args) => MainAsync(args);
     private static async void MainAsync(string[] args)
     {
-        var ReleaseManager = new GitReleaseManager("https://api.github.com/repos/Secodity/wipedir/releases");
+        var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
+        var ReleaseManager = new GitReleaseManager(currentVersion, "https://api.github.com/repos/Secodity/wipedir/releases");
 
         Console.Title = "Wipedir";
 
-        CommandLineParser parser = new(args);
+        CommandLineParser parser = new(args, ReleaseManager);
         await parser.Parse();
         if (!parser.Arguments.SkipVersionCheck)
-        {
             __CheckForUpdate(ReleaseManager);
-            var x = ReleaseManager.GetDownloadUriForNewestVersion(false, true);
-        }
 
         WipedirExecutor executor = new(parser.Arguments);
         executor.Run();
