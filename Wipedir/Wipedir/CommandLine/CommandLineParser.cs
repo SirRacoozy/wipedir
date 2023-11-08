@@ -30,6 +30,7 @@ internal class CommandLineParser
 		_ParsedArguments = new();
         _RootCommand = __SetupRootCommand();
         _RootCommand.AddCommand(__SetupInstallCommand());
+        _RootCommand.AddCommand(__SetupUninstallCommand());
         _GitReleaseManager = manager;
     }
     #endregion
@@ -93,10 +94,20 @@ internal class CommandLineParser
     }
     #endregion
 
+    #region [__SetupUninstallCommand]
+    private static Command __SetupUninstallCommand()
+    {
+        var command = new Command("uninstall", "Uninstalls the wipedir program (Only available on windows).");
+
+        command.SetHandler(() => WipedirInstallationExecutor.Uninstall());
+        return command;
+    }
+    #endregion
+
     #region [__SetupInstallCommand]
     private Command __SetupInstallCommand()
     {
-        var command = new Command("install", "Installs the wipedir as a system wide command.");
+        var command = new Command("install", "Installs the wipedir as a system wide command (Only available on windows).");
         var installDirOption = new Option<string>(name: "--dir", description: "The installation directory." , getDefaultValue: () => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "wipedir"));
         installDirOption.AddAlias("-d");
         var downloadNewestOption = new Option<bool>(name: "--download", description: "Downloads the newest version from GitHub.", getDefaultValue: () => false);

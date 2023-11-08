@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Wipedir.Update;
@@ -11,6 +12,13 @@ internal static class WipedirInstallationExecutor
 {
     internal static void Install(string directory, bool downloadNewestVersion, GitReleaseManager manager)
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(new PlatformNotSupportedException().ToString());
+            Environment.Exit(1);
+        }
+
         __EnsureDirectoryExists(directory);
 
         if (downloadNewestVersion)
@@ -25,6 +33,35 @@ internal static class WipedirInstallationExecutor
         Environment.Exit(0);
     }
 
+    internal static void Uninstall()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(new PlatformNotSupportedException().ToString());
+            Environment.Exit(1);
+        }
+
+        var currentPathVariable = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine) ?? string.Empty;
+        var pathes = currentPathVariable.Split(";").ToList();
+        if (pathes.Count <= 0)
+            Environment.Exit(-1);
+
+        var wipeDirPathes = pathes.Where(p => p.Contains("wipedir")).ToList();
+
+        foreach(var wipeDirPath in wipeDirPathes)
+        {
+            try
+            {
+                Directory.Delete(wipeDirPath, true);
+            } catch { }
+            pathes.RemoveAll(p => p.Equals(wipeDirPath));
+        }
+
+        Environment.SetEnvironmentVariable("PATH", string.Join(";", pathes), EnvironmentVariableTarget.Machine);
+        Environment.Exit(0);
+    }
+
     #region [__AddDirectoryToPath]
     private static void __AddDirectoryToPath(string directory)
     {
@@ -34,7 +71,9 @@ internal static class WipedirInstallationExecutor
 //#if DEBUG
 //        envVar += "_DEV";
 //#endif
-        Environment.SetEnvironmentVariable(envVar, $"{currentPathVariable};{directory}", EnvironmentVariableTarget.Machine);
+
+        if(!currentPathVariable.Contains("wipedir"))
+            Environment.SetEnvironmentVariable(envVar, $"{currentPathVariable};{directory}", EnvironmentVariableTarget.Machine);
     } 
     #endregion
 
