@@ -258,6 +258,7 @@ public class WipedirExecutor
                     __OpenFileInDefaultEditorOnMacOS(filePath);
             }
         }
+        Console.ResetColor();
     }
     #endregion
 

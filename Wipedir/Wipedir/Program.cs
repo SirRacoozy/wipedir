@@ -30,18 +30,23 @@ public static class Program
 
     private static void __CheckForUpdate(GitReleaseManager releaseManager)
     {
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.Title = "wipedir - Checking for an updated Version";
+        Console.WriteLine("wipedir - Checking for an updated Version");
+
         var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
         var result = releaseManager.CheckForAvailableUpdate(currentVersion, false);
 
         if (result.UpdateAvailable)
         {
             Console.Title = "wipedir - Update available";
-            Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"A new update is available. Version {result.NewestVersion}\n" +
                         "Visit https://github.com/repos/Secodity/wipedir/releases to download the new version.\n" +
                         "Press any key to continue...");
             Console.ReadKey();
-            Console.ResetColor();
         }
+        else
+            Console.Title = "Wipedir";
+        Console.ResetColor();
     }
 }
