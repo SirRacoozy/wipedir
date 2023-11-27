@@ -11,10 +11,10 @@ namespace Wipedir.CommandLine;
 internal class CommandLineParser
 {
 	#region  - needs -
-	private readonly string[] _Arguments;
-	private static CommandLineArguments? _ParsedArguments;
-    private readonly RootCommand? _RootCommand;
-    private readonly GitReleaseManager _GitReleaseManager;
+	private readonly string[] m_Arguments;
+	private static CommandLineArguments? m_ParsedArguments;
+    private readonly RootCommand? m_RootCommand;
+    private readonly GitReleaseManager m_GitReleaseManager;
 	#endregion
 
 	#region - ctor -
@@ -26,12 +26,12 @@ internal class CommandLineParser
     /// <param name="arguments">The command line arguments.</param>
 	internal CommandLineParser(string[] arguments, GitReleaseManager manager) 
 	{
-		_Arguments = arguments;
-		_ParsedArguments = new();
-        _RootCommand = __SetupRootCommand();
-        _RootCommand.AddCommand(__SetupInstallCommand());
-        _RootCommand.AddCommand(__SetupUninstallCommand());
-        _GitReleaseManager = manager;
+		m_Arguments = arguments;
+		m_ParsedArguments = new();
+        m_RootCommand = __SetupRootCommand();
+        m_RootCommand.AddCommand(__SetupInstallCommand());
+        m_RootCommand.AddCommand(__SetupUninstallCommand());
+        m_GitReleaseManager = manager;
     }
     #endregion
 
@@ -41,7 +41,7 @@ internal class CommandLineParser
     /// <summary>
     /// Getting the CommandLineArguments object.
     /// </summary>
-    public CommandLineArguments Arguments => _ParsedArguments!;
+    public CommandLineArguments Arguments => m_ParsedArguments!;
     #endregion
 
     #endregion
@@ -80,14 +80,14 @@ internal class CommandLineParser
 
         rootCommand.SetHandler((startDir, dirs, force, recursive, acknowledge, skipFoundFolderPrinting, errorOutput, skipVersionCheck) =>
         {
-            _ParsedArguments.StartDirectory = startDir;
-            _ParsedArguments.DirectoriesToDelete = dirs;
-            _ParsedArguments.ForceDeletion = force;
-            _ParsedArguments.SearchRecursive = recursive;
-            _ParsedArguments.AcknowledgeDeletion = acknowledge;
-            _ParsedArguments.SkipFoundFolderPrinting = skipFoundFolderPrinting;
-            _ParsedArguments.ErrorOutputFile = errorOutput;
-            _ParsedArguments.SkipVersionCheck = skipVersionCheck;
+            m_ParsedArguments.StartDirectory = startDir;
+            m_ParsedArguments.DirectoriesToDelete = dirs;
+            m_ParsedArguments.ForceDeletion = force;
+            m_ParsedArguments.SearchRecursive = recursive;
+            m_ParsedArguments.AcknowledgeDeletion = acknowledge;
+            m_ParsedArguments.SkipFoundFolderPrinting = skipFoundFolderPrinting;
+            m_ParsedArguments.ErrorOutputFile = errorOutput;
+            m_ParsedArguments.SkipVersionCheck = skipVersionCheck;
         }, startingDirectoryOption, directoriesOption, forceOption, recursiveOption, acknowledgeDeletionOption, skipFoundFolderPrintingOption, errorOutputOption, skipVersionCheckOption);
 
         return rootCommand;
@@ -118,7 +118,7 @@ internal class CommandLineParser
 
         command.SetHandler((installDir, downloadNewest) =>
         {
-            WipedirInstallationExecutor.Install(installDir, downloadNewest, _GitReleaseManager);
+            WipedirInstallationExecutor.Install(installDir, downloadNewest, m_GitReleaseManager);
         }, installDirOption, downloadNewestOption);
 
         return command;
@@ -131,7 +131,7 @@ internal class CommandLineParser
     /// </summary>
     public async Task Parse()
     {
-        await _RootCommand!.InvokeAsync(_Arguments).ConfigureAwait(true);
+        await m_RootCommand!.InvokeAsync(m_Arguments).ConfigureAwait(true);
     }
     #endregion 
 

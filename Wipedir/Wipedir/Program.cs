@@ -10,8 +10,8 @@ namespace Wipedir;
 public static class Program
 {
     #region [Main]
-    public static void Main(string[] args) => MainAsync(args);
-    private static async void MainAsync(string[] args)
+    public static void Main(string[] args) => __MainAsync(args);
+    private static async void __MainAsync(string[] args)
     {
         var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
         var ReleaseManager = new GitReleaseManager(currentVersion, "https://api.github.com/repos/Secodity/wipedir/releases");
@@ -47,6 +47,7 @@ public static class Program
         }
         else
             Console.Title = "Wipedir";
+
         Console.ResetColor();
     }
 }
