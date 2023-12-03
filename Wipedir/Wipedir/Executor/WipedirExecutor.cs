@@ -8,8 +8,8 @@ namespace Wipedir.Executor;
 public class WipedirExecutor
 {
     #region - needs -
-    private readonly CommandLineArguments _Arguments;
-    private readonly ConcurrentBag<(string Caller, Exception ex)> _Exceptions;
+    private readonly CommandLineArguments m_Arguments;
+    private readonly ConcurrentBag<(string Caller, Exception ex)> m_Exceptions;
     #endregion
 
     #region - ctor -
@@ -19,8 +19,8 @@ public class WipedirExecutor
     /// <param name="args">The command line argument object.</param>
     public WipedirExecutor(CommandLineArguments args)
     {
-        _Arguments = args;
-        _Exceptions = new();
+        m_Arguments = args;
+        m_Exceptions = [];
     }
     #endregion
 
@@ -34,18 +34,18 @@ public class WipedirExecutor
         __PrintArguments();
 #endif
 
-        __ValidateStartDirectory(_Arguments.StartDirectory);
+        __ValidateStartDirectory(m_Arguments.StartDirectory);
 
-        if (!string.IsNullOrEmpty(_Arguments.ErrorOutputFile))
-            __ValidateErrorOutputFile(_Arguments.ErrorOutputFile);
+        if (!string.IsNullOrEmpty(m_Arguments.ErrorOutputFile))
+            __ValidateErrorOutputFile(m_Arguments.ErrorOutputFile);
 
-        var folders = __FindAllFoldersToDelete(_Arguments);
-        if (!_Arguments.SkipFoundFolderPrinting)
+        var folders = __FindAllFoldersToDelete(m_Arguments);
+        if (!m_Arguments.SkipFoundFolderPrinting)
             __PrintFoundFolders(folders);
-        var removedFilesCount = __RemoveFolders(folders, _Arguments.ForceDeletion);
+        var removedFilesCount = __RemoveFolders(folders, m_Arguments.ForceDeletion);
         Console.WriteLine($"Deleted {removedFilesCount} files.");
-        if (_Exceptions.Count > 0)
-            __WriteErrorsIntoFile(_Arguments.ErrorOutputFile);
+        if (m_Exceptions.Count > 0)
+            __WriteErrorsIntoFile(m_Arguments.ErrorOutputFile);
         else
             __PressKeyToContinue();
     }
@@ -61,7 +61,7 @@ public class WipedirExecutor
     private void __PrintArguments()
     {
         Console.ForegroundColor = ConsoleColor.Gray;
-        Console.WriteLine(_Arguments);
+        Console.WriteLine(m_Arguments);
         __PressKeyToContinue();
         Console.ResetColor();
     }
@@ -134,12 +134,12 @@ public class WipedirExecutor
                                             .Equals(directoryToDelete))).ToList();
 
             matches.ForEach(x => paths.Add(x));
-            directories.RemoveAll(x => matches.Any(y => x.Equals(y)));
+            _ = directories.RemoveAll(x => matches.Any(y => x.Equals(y)));
 
             if (searchRecursive)
-                Parallel.ForEach(directories, dir => __FindFolders(dir, directoriesToDelete, searchRecursive).ForEach(item => paths.Add(item)));
+                _ = Parallel.ForEach(directories, dir => __FindFolders(dir, directoriesToDelete, searchRecursive).ForEach(item => paths.Add(item)));
         }
-        catch (Exception ex) { _Exceptions.Add((nameof(__FindFolders), ex)); }
+        catch (Exception ex) { m_Exceptions.Add((nameof(__FindFolders), ex)); }
         return paths.ToList();
     }
     #endregion
@@ -174,7 +174,7 @@ public class WipedirExecutor
         Console.WriteLine(string.Join(Environment.NewLine, folders));
         Console.WriteLine($"{folders.Count()} folders found.");
 
-        if (!_Arguments.AcknowledgeDeletion)
+        if (!m_Arguments.AcknowledgeDeletion)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Deletion will start right after.");
@@ -201,21 +201,20 @@ public class WipedirExecutor
         var progressBar = new ProgressBar(PbStyle.DoubleLine, directories.Count);
         progressBar.Refresh(0);
 
-        Parallel.ForEach(directories, dir =>
+        _ = Parallel.ForEach(directories, dir =>
         {
             try
             {
                 Directory.Delete(dir, true);
-                Interlocked.Increment(ref filesDeleted);
+                _ = Interlocked.Increment(ref filesDeleted);
             }
             catch (Exception ex)
             {
-                _Exceptions.Add((nameof(__RemoveFolders), ex));
+                m_Exceptions.Add((nameof(__RemoveFolders), ex));
             }
             finally
             {
-                Interlocked.Increment(ref currentFileProgress);
-                progressBar.Refresh((int)Interlocked.Read(ref currentFileProgress));
+                progressBar.Refresh((int)Interlocked.Increment(ref currentFileProgress));
             }
         });
         return filesDeleted;
@@ -229,7 +228,7 @@ public class WipedirExecutor
     private void __PressKeyToContinue()
     {
         Console.Write("Press any key to continue...");
-        Console.ReadKey();
+        _ = Console.ReadKey();
     }
     #endregion
 
@@ -240,11 +239,11 @@ public class WipedirExecutor
     /// <param name="filePath">The file path.</param>
     private void __WriteErrorsIntoFile(string filePath)
     {
-        File.WriteAllText(filePath, string.Join("\n", _Exceptions.Select(e => e.ToString())));
+        File.WriteAllText(filePath, string.Join("\n", m_Exceptions.Select(e => e.ToString())));
         Console.ForegroundColor = ConsoleColor.Red;
-        if (_Exceptions.Any())
+        if (m_Exceptions.Any())
         {
-            Console.WriteLine($"{_Exceptions.Count} exceptions occurred. Exceptions where written to '{_Arguments.ErrorOutputFile}'!");
+            Console.WriteLine($"{m_Exceptions.Count} exceptions occurred. Exceptions where written to '{m_Arguments.ErrorOutputFile}'!");
             Console.Write("Press 'O' to open the log file or any other key to continue...");
 
             var Key = Console.ReadKey();
@@ -266,21 +265,21 @@ public class WipedirExecutor
     #region [__OpenFileInDefaultEditorOnWindows]
     private void __OpenFileInDefaultEditorOnWindows(string filePath)
     {
-        Process.Start(new ProcessStartInfo() { FileName = filePath, UseShellExecute = true });
+        _ = Process.Start(new ProcessStartInfo() { FileName = filePath, UseShellExecute = true });
     }
     #endregion
 
     #region [__OpenFileInDefaultEditorOnMacOS]
     private void __OpenFileInDefaultEditorOnMacOS(string filePath)
     {
-        Process.Start("open", filePath);
+        _ = Process.Start("open", filePath);
     }
     #endregion
 
     #region [__OpenFileInDefaultEditorOnLinux]
     private void __OpenFileInDefaultEditorOnLinux(string filePath)
     {
-        Process.Start(new ProcessStartInfo()
+        _ = Process.Start(new ProcessStartInfo()
         {
             FileName = "xdg-open",
             Arguments = filePath
@@ -298,8 +297,9 @@ public class WipedirExecutor
         try
         {
             var splitted = filePath.Split("\\");
+            if (splitted.Length > 1)
+                _ = Directory.CreateDirectory(Path.Combine(splitted.Take(splitted.Length - 1).ToArray()));
 
-            Directory.CreateDirectory(Path.Combine(splitted.Take(splitted.Length - 1).ToArray()));
             File.Create(filePath).Dispose();
         }
         catch (Exception _)

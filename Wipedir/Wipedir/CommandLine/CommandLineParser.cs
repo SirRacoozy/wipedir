@@ -1,36 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
-using System.CommandLine;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.CommandLine;
 using Wipedir.Executor;
 using Wipedir.Update;
 
 namespace Wipedir.CommandLine;
 internal class CommandLineParser
 {
-	#region  - needs -
-	private readonly string[] m_Arguments;
-	private static CommandLineArguments? m_ParsedArguments;
+    #region  - needs -
+    private readonly string[] m_Arguments;
+    private static CommandLineArguments? m_ParsedArguments = new();
     private readonly RootCommand? m_RootCommand;
     private readonly GitReleaseManager m_GitReleaseManager;
-	#endregion
+    #endregion
 
-	#region - ctor -
+    #region - ctor -
     /// <summary>
     /// Creates an instance of the CommandLineParser.
     /// While instantiation the root command wipedir is created and assigned all the options.
     /// Also the handler to map the settings is assigned.
     /// </summary>
     /// <param name="arguments">The command line arguments.</param>
-	internal CommandLineParser(string[] arguments, GitReleaseManager manager) 
-	{
-		m_Arguments = arguments;
-		m_ParsedArguments = new();
+    internal CommandLineParser(string[] arguments, GitReleaseManager manager)
+    {
+        m_Arguments = arguments;
         m_RootCommand = __SetupRootCommand();
         m_RootCommand.AddCommand(__SetupInstallCommand());
         m_RootCommand.AddCommand(__SetupUninstallCommand());
+        m_RootCommand.AddCommand(__SetupTemplateCommand());
         m_GitReleaseManager = manager;
     }
     #endregion
@@ -80,7 +75,7 @@ internal class CommandLineParser
 
         rootCommand.SetHandler((startDir, dirs, force, recursive, acknowledge, skipFoundFolderPrinting, errorOutput, skipVersionCheck) =>
         {
-            m_ParsedArguments.StartDirectory = startDir;
+            m_ParsedArguments!.StartDirectory = startDir;
             m_ParsedArguments.DirectoriesToDelete = dirs;
             m_ParsedArguments.ForceDeletion = force;
             m_ParsedArguments.SearchRecursive = recursive;
@@ -108,7 +103,7 @@ internal class CommandLineParser
     private Command __SetupInstallCommand()
     {
         var command = new Command("install", "Installs the wipedir as a system wide command (Only available on windows).");
-        var installDirOption = new Option<string>(name: "--dir", description: "The installation directory." , getDefaultValue: () => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "wipedir"));
+        var installDirOption = new Option<string>(name: "--dir", description: "The installation directory.", getDefaultValue: () => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "wipedir"));
         installDirOption.AddAlias("-d");
         var downloadNewestOption = new Option<bool>(name: "--download", description: "Downloads the newest version from GitHub.", getDefaultValue: () => false);
         downloadNewestOption.AddAlias("-dl");
@@ -125,13 +120,36 @@ internal class CommandLineParser
     }
     #endregion
 
+    #region [__SetupTemplateCommand]
+    /// <summary>
+    /// Set up the command to use a template.
+    /// </summary>
+    /// <returns></returns>
+    private Command __SetupTemplateCommand()
+    {
+        var command = new Command("template", "Uses a template to run the program.");
+        var templateNameArgument = new Argument<string>(name: "Template name", description: "The name of the template");
+
+        command.AddArgument(templateNameArgument);
+
+        command.SetHandler((templateName) =>
+        {
+            var result = WipedirTemplateExecutor.RunWithTemplate(templateName);
+            if (!result) Console.WriteLine("Error occurred during execution of the template.");
+
+        }, templateNameArgument);
+
+        return command;
+    }
+    #endregion
+
     #region [Parse]
     /// <summary>
     /// Parsing the command line arguments.
     /// </summary>
     public async Task Parse()
     {
-        await m_RootCommand!.InvokeAsync(m_Arguments).ConfigureAwait(true);
+        _ = await m_RootCommand!.InvokeAsync(m_Arguments).ConfigureAwait(true);
     }
     #endregion 
 

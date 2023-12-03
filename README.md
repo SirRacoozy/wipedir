@@ -18,7 +18,7 @@ Example execution: `.\wipedir.exe -s C:\ -d .vs -d bin -d obj -r`
 ## How to build from source
 
 ### Prerequisities
-- [.NET 8 RC2](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+- [.NET 8](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 
 ### Building
 
@@ -31,3 +31,4 @@ Example execution: `.\wipedir.exe -s C:\ -d .vs -d bin -d obj -r`
 This software uses the following nuget packages: 
 - [System.CommandLine](https://www.nuget.org/packages/System.CommandLine)
 - [Goblinfactory.Konsole](https://github.com/goblinfactory/konsole/)
+- [Newtonsoft.Json](https://www.nuget.org/packages/Newtonsoft.Json/)

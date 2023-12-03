@@ -1,6 +1,4 @@
 ﻿using System.Reflection;
-using System.Runtime.Serialization.Json;
-using System.Text;
 using Wipedir.CommandLine;
 using Wipedir.Executor;
 using Wipedir.Update;
@@ -43,7 +41,7 @@ public static class Program
             Console.WriteLine($"A new update is available. Version {result.NewestVersion}\n" +
                         "Visit https://github.com/repos/Secodity/wipedir/releases to download the new version.\n" +
                         "Press any key to continue...");
-            Console.ReadKey();
+            _ = Console.ReadKey();
         }
         else
             Console.Title = "Wipedir";

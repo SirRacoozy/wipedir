@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Wipedir.CommandLine;
+﻿namespace Wipedir.CommandLine;
 public class CommandLineArguments
 {
     #region - properties -
@@ -72,13 +66,13 @@ public class CommandLineArguments
     #region [ToString]
     public override string ToString()
     {
-        return $"StartDirectory: {StartDirectory}\n" +
-            $"DirectoriesToDelete: {string.Join(",", DirectoriesToDelete)}\n" +
-            $"SearchRecursive: {SearchRecursive}\n" +
-            $"ForceDeletion: {ForceDeletion}\n" +
-            $"AcknowledgeDeletion: {AcknowledgeDeletion}\n" +
-            $"SkipFoundFolderPrinting: {SkipFoundFolderPrinting}\n" +
-            $"ErrorOutputDirectory: {ErrorOutputFile}\n" +
+        return $"StartDirectory: {StartDirectory} \n" +
+            $"DirectoriesToDelete: {string.Join(",", DirectoriesToDelete)} \n" +
+            $"SearchRecursive: {SearchRecursive} \n" +
+            $"ForceDeletion: {ForceDeletion} \n" +
+            $"AcknowledgeDeletion: {AcknowledgeDeletion} \n" +
+            $"SkipFoundFolderPrinting: {SkipFoundFolderPrinting} \n" +
+            $"ErrorOutputDirectory: {ErrorOutputFile} \n" +
             $"SkipVersionCheck: {SkipVersionCheck}";
     }
     #endregion 

@@ -1,0 +1,10 @@
+{
+  "StartDirectory": "C:\\",
+  "DirectoriesToDelete": [ ".vs", "obj", "bin" ],
+  "ErrorOutputFile": "error.txt",
+  "SearchRecursive": true,
+  "ForceDeletion": true,
+  "AcknowledgeDeletion": false,
+  "SkipFoundFolderPrinting": true,
+  "SkipVersionCheck": false
+}

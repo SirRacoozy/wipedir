@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO.Compression;
-using System.Linq;
+﻿using System.IO.Compression;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using Wipedir.Update;
 
 namespace Wipedir.Executor;
@@ -49,13 +44,14 @@ internal static class WipedirInstallationExecutor
 
         var wipeDirPathes = pathes.Where(p => p.Contains("wipedir")).ToList();
 
-        foreach(var wipeDirPath in wipeDirPathes)
+        foreach (var wipeDirPath in wipeDirPathes)
         {
             try
             {
                 Directory.Delete(wipeDirPath, true);
-            } catch { }
-            pathes.RemoveAll(p => p.Equals(wipeDirPath));
+            }
+            catch { }
+            _ = pathes.RemoveAll(p => p.Equals(wipeDirPath));
         }
 
         Environment.SetEnvironmentVariable("PATH", string.Join(";", pathes), EnvironmentVariableTarget.Machine);
@@ -68,13 +64,10 @@ internal static class WipedirInstallationExecutor
         var currentPathVariable = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine);
 
         var envVar = "PATH";
-//#if DEBUG
-//        envVar += "_DEV";
-//#endif
 
-        if(!currentPathVariable.Contains("wipedir"))
+        if (!currentPathVariable.Contains("wipedir"))
             Environment.SetEnvironmentVariable(envVar, $"{currentPathVariable};{directory}", EnvironmentVariableTarget.Machine);
-    } 
+    }
     #endregion
 
     #region [__CopyExecutableFiles]
@@ -83,7 +76,7 @@ internal static class WipedirInstallationExecutor
         var currentPath = Environment.CurrentDirectory;
         File.Copy(Path.Combine(currentPath, "Wipedir.exe"), Path.Combine(directory, "Wipedir.exe"), true);
         File.Copy(Path.Combine(currentPath, "Wipedir.pdb"), Path.Combine(directory, "Wipedir.pdb"), true);
-    } 
+    }
     #endregion
 
     #region [__UnzipDownload]
@@ -92,7 +85,7 @@ internal static class WipedirInstallationExecutor
         ZipFile.ExtractToDirectory(Path.Combine(directory, "download.zip"), directory, true);
         File.Copy(Path.Combine(directory, "win-x64", "Wipedir.exe"), Path.Combine(directory, "Wipedir.exe"), true);
         File.Copy(Path.Combine(directory, "win-x64", "Wipedir.pdb"), Path.Combine(directory, "Wipedir.pdb"), true);
-    } 
+    }
     #endregion
 
     #region [__DownloadNewestVersion]
@@ -100,7 +93,7 @@ internal static class WipedirInstallationExecutor
     {
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Add("User-Agent", "Anything");
-        
+
         using var response = client.GetAsync(manager.GetDownloadUriForNewestVersion(false, Environment.Is64BitOperatingSystem)).GetAwaiter().GetResult();
 
         using var streamToReadFrom = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
@@ -108,25 +101,25 @@ internal static class WipedirInstallationExecutor
         using var localStream = new FileStream(path: Path.Combine(directory, "download.zip"), mode: FileMode.Create);
 
         streamToReadFrom.CopyTo(localStream);
-    } 
+    }
     #endregion
 
     #region [__EnsureDirectoryExists]
     private static void __EnsureDirectoryExists(string directory)
     {
-        if (!Directory.Exists(directory)) 
+        if (!Directory.Exists(directory))
         {
             try
             {
-                Directory.CreateDirectory(directory);
+                _ = Directory.CreateDirectory(directory);
             }
-            catch(Exception _)
+            catch (Exception)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"Couldn't create directory: '{directory}'.");
                 Console.WriteLine(_.ToString());
                 Console.Write("Press any key to continue...");
-                Console.ReadKey();
+                _ = Console.ReadKey();
                 Environment.Exit(1);
             }
         }
