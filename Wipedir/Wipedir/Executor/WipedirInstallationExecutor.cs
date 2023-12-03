@@ -113,11 +113,11 @@ internal static class WipedirInstallationExecutor
             {
                 _ = Directory.CreateDirectory(directory);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"Couldn't create directory: '{directory}'.");
-                Console.WriteLine(_.ToString());
+                Console.WriteLine(ex.ToString());
                 Console.Write("Press any key to continue...");
                 _ = Console.ReadKey();
                 Environment.Exit(1);
