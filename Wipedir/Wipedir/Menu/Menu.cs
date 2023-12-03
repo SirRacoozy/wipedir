@@ -75,6 +75,13 @@ public class Menu
     }
     #endregion
 
+    #region [__PrintMenu]
+    private void __PrintMenu()
+    {
+
+    }
+    #endregion
+
     #region [__HandleKeyInput]
     private void __HandleKeyInput(ConsoleKey key)
     {
@@ -87,8 +94,8 @@ public class Menu
                 if (m_CanMoveUp)
                     m_CurrentIndex--;
                 return;
-            case ConsoleKey.DownArrow: 
-                if(m_CanMoveDown)
+            case ConsoleKey.DownArrow:
+                if (m_CanMoveDown)
                     m_CurrentIndex++;
                 return;
             case ConsoleKey.LeftArrow:
@@ -98,6 +105,8 @@ public class Menu
             case ConsoleKey.RightArrow:
                 if (m_CanCloseSubList)
                     Items[m_CurrentIndexInt].Open = false;
+                return;
+            default:
                 return;
         }
     }
