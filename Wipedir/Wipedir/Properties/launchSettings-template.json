@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Wipedir": {
+      "commandName": "Project",
+      "commandLineArgs": "template vs"
+    }
+  }
+}

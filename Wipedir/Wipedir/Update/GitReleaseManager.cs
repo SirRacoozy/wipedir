@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization.Json;
+﻿using System.Runtime.Serialization.Json;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Wipedir.Update;
 internal class GitReleaseManager
 {
     #region - ctor -
-    public GitReleaseManager(Version currentVersion, string Uri)
+    public GitReleaseManager(Version currentVersion, string uri)
     {
-        RepoUri = new(Uri);
+        RepoUri = new(uri);
         __GetReleases();
         NewestVersion = CheckForAvailableUpdate(currentVersion, false).NewestVersion;
     }
@@ -36,42 +32,42 @@ internal class GitReleaseManager
     #region - methods -
 
     #region [CheckForAvailableUpdate]
-    public (bool UpdateAvailable, Version? NewestVersion) CheckForAvailableUpdate(Version CurrentVersion, bool CheckForPrelease)
+    public (bool UpdateAvailable, Version? NewestVersion) CheckForAvailableUpdate(Version currentVersion, bool checkForPrelease)
     {
         bool updateAvailable = false;
-        if (Releases == null || CurrentVersion == null)
+        if (Releases == null || currentVersion == null)
             return (updateAvailable, null);
 
-        var gitReleases = CheckForPrelease ? Releases : Releases.Where(r => !r.prerelease).ToList();
+        var gitReleases = checkForPrelease ? Releases : Releases.Where(r => !r.prerelease).ToList();
 
-        if (gitReleases.Any(r => r.Version.Major > CurrentVersion.Major))
+        if (gitReleases.Any(r => r.Version.Major > currentVersion.Major))
             updateAvailable = true;
         else
         {
-            gitReleases = gitReleases.Where(r => r.Version.Major ==  CurrentVersion.Major).ToList();
+            gitReleases = gitReleases.Where(r => r.Version.Major == currentVersion.Major).ToList();
             if (!gitReleases.Any())
                 return (updateAvailable, null);
 
             var greatestMinorVersion = gitReleases.Max(r => r.Version.Minor);
-            if(greatestMinorVersion > CurrentVersion.Minor)
+            if (greatestMinorVersion > currentVersion.Minor)
                 updateAvailable = true;
             else
             {
-                gitReleases = gitReleases.Where(r => r.Version.Minor == CurrentVersion.Minor).ToList();
-                if(!gitReleases.Any())
+                gitReleases = gitReleases.Where(r => r.Version.Minor == currentVersion.Minor).ToList();
+                if (!gitReleases.Any())
                     return (updateAvailable, null);
 
                 var greatestBuildVersion = gitReleases.Max(r => r.Version.Build);
-                if(greatestBuildVersion > CurrentVersion.Build)
+                if (greatestBuildVersion > currentVersion.Build)
                     updateAvailable = true;
                 else
                 {
-                    gitReleases = gitReleases.Where(r => r.Version.Build == CurrentVersion.Build).ToList();
-                    if(!gitReleases.Any())
+                    gitReleases = gitReleases.Where(r => r.Version.Build == currentVersion.Build).ToList();
+                    if (!gitReleases.Any())
                         return (updateAvailable, null);
 
                     var greatestMinorRevisionVersion = gitReleases.Max(r => r.Version.MinorRevision);
-                    if(greatestMinorRevisionVersion > CurrentVersion.MinorRevision)
+                    if (greatestMinorRevisionVersion > currentVersion.MinorRevision)
                         updateAvailable = true;
                 }
             }
@@ -97,10 +93,11 @@ internal class GitReleaseManager
         downloadUrl = downloadUrl.Replace("/repos", string.Empty);
         downloadUrl = Path.Combine(downloadUrl, "download", versionString);
 
-        if (usePortable)
-            return new Uri(Path.Combine(downloadUrl, $"wipedir-portable-{versionString}.zip"));
-        else
-            return new Uri(Path.Combine(downloadUrl, $"wipedir-{(useX64 ? "win-x64" : "win-x86")}-{versionString}.zip"));
+        var platform = useX64 ? "win-x64" : "win-x86";
+
+        return usePortable
+            ? new Uri(Path.Combine(downloadUrl, $"wipedir-portable-{versionString}.zip"))
+            : new Uri(Path.Combine(downloadUrl, $"wipedir-{(platform)}-{versionString}.zip"));
     }
     #endregion
 
@@ -113,7 +110,7 @@ internal class GitReleaseManager
 
         using var stream = new MemoryStream(Encoding.Default.GetBytes(response));
         var serializer = new DataContractJsonSerializer(typeof(List<Release>));
-        Releases = (serializer.ReadObject(stream) as List<Release>)?? new();
+        Releases = (serializer.ReadObject(stream) as List<Release>) ?? new();
     }
     #endregion
 
