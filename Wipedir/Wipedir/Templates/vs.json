@@ -1,5 +1,5 @@
 {
-  "StartDirectory": "D:\\",
+  "StartDirectory": "C:\\",
   "DirectoriesToDelete": [ ".vs", "obj", "bin" ],
   "ErrorOutputFile": "error.txt",
   "SearchRecursive": true,
