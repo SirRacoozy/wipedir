@@ -1,4 +1,5 @@
 # wipedir
+![Wipedir Logo](wipedir/Icon/Wipedir.jpeg)
 
 A C# command line tool to remove all folders that follow a given list of names from a starting directory. 
 
@@ -6,7 +7,7 @@ A C# command line tool to remove all folders that follow a given list of names f
 
 Example execution: `.\wipedir.exe -s C:\ -d .vs -d bin -d obj -r`
 
-| Parameter | Alias | Explaination |
+| Parameter | Alias | Explanation |
 |:---:|:---:|---|
 |`--start`|`-s`| The starting directory.|
 |`--dir`|`-d`|Directory to delete. For multiple directories provide the `-d` argument up to 10 times.|
