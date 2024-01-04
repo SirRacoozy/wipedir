@@ -1,5 +1,5 @@
 # wipedir
-![Wipedir Logo](wipedir/Icon/Wipedir.jpeg)
+![Wipedir Logo](https://github.com/Secodity/wipedir/blob/Logo/Wipedir/Wipedir/Icon/WipeDir.jpeg)
 
 A C# command line tool to remove all folders that follow a given list of names from a starting directory. 
 
