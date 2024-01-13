@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using System.Diagnostics;
 using Wipedir.Executor;
 using Wipedir.Update;
 
@@ -10,6 +11,7 @@ internal class CommandLineParser
     private static CommandLineArguments? m_ParsedArguments = new();
     private readonly RootCommand? m_RootCommand;
     private readonly GitReleaseManager m_GitReleaseManager;
+    private readonly Version m_CurrentVersion;
     #endregion
 
     #region - ctor -
@@ -19,14 +21,17 @@ internal class CommandLineParser
     /// Also the handler to map the settings is assigned.
     /// </summary>
     /// <param name="arguments">The command line arguments.</param>
-    internal CommandLineParser(string[] arguments, GitReleaseManager manager)
+    internal CommandLineParser(string[] arguments, GitReleaseManager manager, Version currentVersion)
     {
         m_Arguments = arguments;
         m_RootCommand = __SetupRootCommand();
         m_RootCommand.AddCommand(__SetupInstallCommand());
         m_RootCommand.AddCommand(__SetupUninstallCommand());
+        m_RootCommand.AddCommand(__SetupUpdateCommand());
+        m_RootCommand.AddCommand(__SetupCleanupCommand());
         m_RootCommand.AddCommand(__SetupTemplateCommand());
         m_GitReleaseManager = manager;
+        m_CurrentVersion = currentVersion;
     }
     #endregion
 
@@ -90,11 +95,11 @@ internal class CommandLineParser
     #endregion
 
     #region [__SetupUninstallCommand]
-    private static Command __SetupUninstallCommand()
+    private Command __SetupUninstallCommand()
     {
         var command = new Command("uninstall", "Uninstalls the wipedir program (Only available on windows).");
 
-        command.SetHandler(() => WipedirInstallationExecutor.Uninstall());
+        command.SetHandler(() => WipedirUpdateExecutor.Uninstall(m_GitReleaseManager));
         return command;
     }
     #endregion
@@ -103,18 +108,14 @@ internal class CommandLineParser
     private Command __SetupInstallCommand()
     {
         var command = new Command("install", "Installs the wipedir as a system wide command (Only available on windows).");
-        var installDirOption = new Option<string>(name: "--dir", description: "The installation directory.", getDefaultValue: () => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "wipedir"));
-        installDirOption.AddAlias("-d");
-        var downloadNewestOption = new Option<bool>(name: "--download", description: "Downloads the newest version from GitHub.", getDefaultValue: () => false);
-        downloadNewestOption.AddAlias("-dl");
+        var includePreReleaseOption = new Option<bool>(name: "--prerelease", description: "Include prerelease versions from GitHub.", getDefaultValue: () => false);
 
-        command.AddOption(installDirOption);
-        command.AddOption(downloadNewestOption);
+        command.AddOption(includePreReleaseOption);
 
-        command.SetHandler((installDir, downloadNewest) =>
+        command.SetHandler((includePreRelease) =>
         {
-            WipedirInstallationExecutor.Install(installDir, downloadNewest, m_GitReleaseManager);
-        }, installDirOption, downloadNewestOption);
+            WipedirUpdateExecutor.Install(m_GitReleaseManager, m_CurrentVersion, includePreRelease);
+        }, includePreReleaseOption);
 
         return command;
     }
@@ -138,6 +139,43 @@ internal class CommandLineParser
             if (!result) Console.WriteLine("Error occurred during execution of the template.");
 
         }, templateNameArgument);
+
+        return command;
+    }
+    #endregion
+
+    #region [__SetupUpdateCommand]
+    private Command __SetupUpdateCommand()
+    {
+        var command = new Command("update", "Updates the program to the newest version.");
+        var includePreReleaseOption = new Option<bool>(name: "--prerelease", description: "Include prerelease versions from GitHub.", getDefaultValue: () => false);
+
+        command.AddOption(includePreReleaseOption);
+
+        command.SetHandler((includePreRelease) =>
+        {
+            WipedirUpdateExecutor.Install(m_GitReleaseManager, m_CurrentVersion, includePreRelease);
+        }, includePreReleaseOption);
+
+        return command;
+    }
+    #endregion
+
+    #region [__SetupCleanupCommand]
+    private Command __SetupCleanupCommand()
+    {
+        var command = new Command("cleanup", "Cleans up older versions");
+        var PID = new Option<int>(name: "--pid", description: "The pid of the previous process.") { IsRequired = true };
+        PID.AddAlias("-p");
+
+        command.AddOption(PID);
+
+        command.SetHandler((pid) =>
+        {
+            Process.GetProcessById(pid).Kill();
+
+            WipedirUpdateExecutor.RemoveOtherWipedirFolders(m_GitReleaseManager, false);
+        }, PID);
 
         return command;
     }

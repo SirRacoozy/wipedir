@@ -16,7 +16,7 @@ public static class Program
 
         Console.Title = "Wipedir";
 
-        CommandLineParser parser = new(args, ReleaseManager);
+        CommandLineParser parser = new(args, ReleaseManager, currentVersion);
         await parser.Parse();
         if (!parser.Arguments.SkipVersionCheck)
             __CheckForUpdate(ReleaseManager);
