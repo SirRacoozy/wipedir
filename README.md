@@ -1,6 +1,6 @@
 # wipedir
 <p align="center">
-<img src='https://github.com/Secodity/wipedir/blob/Logo/Wipedir/Wipedir/Icon/WipeDir.jpeg' width='200'>
+<img src='https://github.com/SirRacoozy/wipedir/blob/Logo/Wipedir/Wipedir/Icon/WipeDir.jpeg' width='200'>
 </p>
 A C# command line tool to remove all folders that follow a given list of names from a starting directory. 
 
